@@ -43,7 +43,7 @@ object build extends Build {
     enableCrossBuild = true
   )
 
-  def scalaCheckVersion = "1.12.2"
+  private[this] val scalaCheckVersion = SettingKey[String]("scalaCheckVersion")
 
   private def gitHash = sys.process.Process("git rev-parse HEAD").lines_!.head
 
@@ -51,8 +51,16 @@ object build extends Build {
     organization := "org.scalaz",
 
     scalaVersion := "2.10.5",
-    crossScalaVersions := Seq("2.10.5", "2.11.6"),
+    crossScalaVersions := Seq("2.10.5", "2.11.6", "2.12.0-M1"),
     resolvers ++= (if (scalaVersion.value.endsWith("-SNAPSHOT")) List(Opts.resolver.sonatypeSnapshots) else Nil),
+    scalaCheckVersion := {
+      scalaVersion.value match {
+        case "2.12.0-M1" =>
+          "1.11.6"
+        case _ =>
+          "1.12.2"
+      }
+    },
     scalacOptions ++= Seq(
       // contains -language:postfixOps (because 1+ as a parameter to a higher-order function is treated as a postfix op)
       // no generic signatures, see SI-7932 and #571
@@ -245,7 +253,7 @@ object build extends Build {
     dependencies = Seq(core, concurrent, iteratee),
     settings     = standardSettings ++ Seq[Sett](
       name := "scalaz-scalacheck-binding",
-      libraryDependencies += "org.scalacheck" %% "scalacheck" % scalaCheckVersion,
+      libraryDependencies += "org.scalacheck" %% "scalacheck" % scalaCheckVersion.value,
       osgiExport("scalaz.scalacheck")
     )
   )
@@ -257,7 +265,7 @@ object build extends Build {
     settings = standardSettings ++Seq[Sett](
       name := "scalaz-tests",
       publishArtifact := false,
-      libraryDependencies += "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test"
+      libraryDependencies += "org.scalacheck" %% "scalacheck" % scalaCheckVersion.value % "test"
     )
   )
 
